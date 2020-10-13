@@ -43,10 +43,10 @@ function promptQuestions() {
     ])
 }
 function query(connection) {
-     promptQuestions()
+    promptQuestions()
         .then(answers => {
             // Use user feedback for... whatever!!
-             console.log(answers);
+            console.log(answers);
             // const operation = answers.operation;
             switch (answers.operation) {
                 case "view all departments":
@@ -79,7 +79,7 @@ function query(connection) {
                         }
                     ])
                         .then(res => {
-                            return addDepartment(connection,res.deptName);
+                            return addDepartment(connection, res.deptName);
                         });
                     //retun Department name and the new ID
     
@@ -180,19 +180,20 @@ function query(connection) {
                 default:
                     break;
             }
-              return answers.operation;
+            return answers.operation;
         })
-         .then(() => {
-            //  console.log(`${operation} line 185`);
-        //     if (operation === "quit") {
-        //         connection.end();
-        //     }
-             console.log("HI");
-            //  return query(connection);
-         })
-         .then(() => {
-             return query(connection);
-         })
+        .then(promptQuestions)
+        //  .then(() => {
+        //     //  console.log(`${operation} line 185`);
+        // //     if (operation === "quit") {
+        // //         connection.end();
+        // //     }
+        //      console.log("HI");
+        //     //  return query(connection);
+        //  })
+        //  .then(() => {
+        //      return query(connection);
+        //  })
         
         .catch(error => {
             if (error.isTtyError) {
