@@ -180,9 +180,9 @@ function query(connection) {
                 default:
                     break;
             }
-            //   return answers.operation;
-            // return query(connection);
-        }).then(query(connection))
+            return answers.operation;
+        })
+        .then(promptQuestions)
         //  .then(() => {
         //     //  console.log(`${operation} line 185`);
         // //     if (operation === "quit") {
