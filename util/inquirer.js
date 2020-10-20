@@ -1,7 +1,7 @@
 const inquirer = require('inquirer');
 const logo = require('asciiart-logo');
 const { getAll, addDepartment } = require('./query');
-const cTable = require('console.table');
+require('console.table');
 
 
 //asciiart Logo
@@ -182,15 +182,14 @@ function query(connection) {
             }
             return answers.operation;
         })
-        .then(promptQuestions)
-        //  .then(() => {
-        //     //  console.log(`${operation} line 185`);
-        // //     if (operation === "quit") {
-        // //         connection.end();
-        // //     }
-        //      console.log("HI");
-        //     //  return query(connection);
-        //  })
+         .then((operation) => {
+            //  console.log(`${operation} line 185`);
+            if (operation === "quit") {
+                connection.end();
+            }
+             console.log("HI");
+             return query(connection);
+         })
         //  .then(() => {
         //      return query(connection);
         //  })

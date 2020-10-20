@@ -1,8 +1,8 @@
 
 const cTable = require('console.table');
 
-function getAll(connection, table) {
-    connection.query(`SELECT * FROM ${table}`, function (err, res) {
+async function getAll(connection, table) {
+   await connection.query(`SELECT * FROM ${table}`, function (err, res) {
         if (err) throw err;
          console.table(res);
     });
