@@ -1,12 +1,8 @@
 
-const cTable = require('console.table');
+require('console.table');
 
 function getAll(connection, table) {
-    connection.query(`SELECT * FROM ${table}`, function (err, res) {
-        if (err) throw err;
-         console.table(res);
-    });
-    // return (res);
+    return connection.promise().query(`SELECT department.id, department.name FROM ${table}`);
 }
 
 function addDepartment(connection, deptName) {

@@ -51,7 +51,10 @@ function query(connection) {
             switch (answers.operation) {
                 case "view all departments":
                     // Display all departments
-                    getAll(connection, "department");
+                    getAll(connection, "department").then(([rows]) => {
+                        console.table(rows);
+                        query(connection);
+                    });
                     break;
                 case "view all roles":
                     // Display all roles
@@ -82,7 +85,7 @@ function query(connection) {
                             return addDepartment(connection, res.deptName);
                         });
                     //retun Department name and the new ID
-    
+
                     break;
                 case "add a role":
                     //get role name, salary, and department
@@ -168,11 +171,11 @@ function query(connection) {
                                 return false;
                             }
                         }
-    
+
                     ])
                     break;
                 case "update an employee role":
-    
+
                     break;
                 case "quit":
                     connection.end();
@@ -180,21 +183,11 @@ function query(connection) {
                 default:
                     break;
             }
-            return answers.operation;
         })
-        .then(promptQuestions)
-        //  .then(() => {
-        //     //  console.log(`${operation} line 185`);
-        // //     if (operation === "quit") {
-        // //         connection.end();
-        // //     }
-        //      console.log("HI");
-        //     //  return query(connection);
-        //  })
         //  .then(() => {
         //      return query(connection);
         //  })
-        
+
         .catch(error => {
             if (error.isTtyError) {
                 // Prompt couldn't be rendered in the current environment
