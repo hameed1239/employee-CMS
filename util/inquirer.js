@@ -1,7 +1,7 @@
 const inquirer = require('inquirer');
 const logo = require('asciiart-logo');
-const { getAll, addDepartment } = require('./query');
-const cTable = require('console.table');
+const { getAll, addDepartment, addRow, addEmployee, getRoles, updateEmployee } = require('./query');
+require('console.table');
 
 
 //asciiart Logo
@@ -22,7 +22,7 @@ function logoArt() {
             .render()
     );
 }
-function promptQuestions() {
+function promptQuestions() {// Get user operation here with inquirer
     return inquirer.prompt([
         {
             type: "list",
@@ -42,12 +42,9 @@ function promptQuestions() {
 
     ])
 }
-function query(connection) {
+function query(connection) {// Perform all query here
     promptQuestions()
         .then(answers => {
-            // Use user feedback for... whatever!!
-            console.log(answers);
-            // const operation = answers.operation;
             switch (answers.operation) {
                 case "view all departments":
                     // Display all departments
@@ -58,11 +55,17 @@ function query(connection) {
                     break;
                 case "view all roles":
                     // Display all roles
-                    getAll(connection, "role");
+                    getAll(connection, "role").then(([rows]) => {
+                        console.table(rows);
+                        query(connection);
+                    });
                     break;
                 case "view all employees":
                     // Display all employees
-                    getAll(connection, "employee");
+                    getAll(connection, "employee").then(([rows]) => {
+                        console.table(rows);
+                        query(connection);
+                    });
                     break;
                 case "add a department":
                     // get department name
@@ -82,7 +85,11 @@ function query(connection) {
                         }
                     ])
                         .then(res => {
-                            return addDepartment(connection, res.deptName);
+                            addDepartment(connection, res.deptName).then(([rows]) => {
+                                console.table(rows);
+                                query(connection);
+                            })
+                            .catch(err => console.log(err));
                         });
                     //retun Department name and the new ID
 
@@ -115,14 +122,14 @@ function query(connection) {
                             }
                         },
                         {
-                            type: "input",
+                            type: "number",
                             name: "dept",
                             message: "Enter a department for the new role",
                             validate: (dept) => {
-                                if (dept && dept.length <= 30) {
+                                if (dept && dept > 0) {
                                     return true;
                                 }
-                                console.log("\nErr: Enter a valid department with less than 30 characters in length ")
+                                console.log("\nErr: Enter a valid department ID")
                                 return false;
                             }
                         }
@@ -130,6 +137,11 @@ function query(connection) {
                         .then(role => {
                             //Add new role
                             console.log(role);
+                            addRow(connection, role).then(([rows]) => {
+                                console.table(rows);
+                                query(connection);
+                            })
+                            .catch(err => console.log(err));
                         })
                     break;
                 case "add an employee":
@@ -160,22 +172,132 @@ function query(connection) {
                             }
                         },
                         {
-                            type: "input",
-                            name: "managerID",
-                            message: "Enter employee's manager ID (optional: press Enter if no employee has no manager",
-                            validate: (managerID) => {
-                                if (managerID > 0) {
+                            type: "number",
+                            name: "roleID",
+                            message: "Enter employee's role ID",
+                            validate: (roleID) => {
+                                if (roleID > 0) {
                                     return true;
                                 }
-                                console.log("\nErr: Enter a valid manager ID ")
+                                console.log("\nErr: Enter a valid role ID ")
                                 return false;
+                                
+                            }
+                        },
+                        {
+                            type: "number",
+                            name: "managerID",
+                            message: "Enter employee's manager ID (optional: press Enter if employee has no manager)",
+                            validate: (managerID) => {
+                                if (managerID) {
+                                    if(managerID > 0){
+                                        return true;
+                                    }
+                                    else {
+                                        console.log("\nErr: Enter a valid manager ID ")
+                                        return false;
+                                    }
+                                }
+                                else{
+                                    managerID = null;
+                                    return true;
+                                }
+                                
                             }
                         }
 
                     ])
+                    .then(employeeData =>{
+                        console.log(employeeData);
+                        if(isNaN(employeeData.managerID)){
+                            employeeData.managerID = "NULL";
+                        }
+                        //console.log(employeeData);
+                        addEmployee(connection, employeeData)
+                        .then(([rows])=>{
+                            console.table(rows);
+                            query(connection);
+                        })
+                    })
                     break;
                 case "update an employee role":
-
+                    let employees;
+                    let employeeInfo;
+                    let rolesTitle;
+                    let roles;
+                    getAll(connection, "employee")
+                    .then(([rows]) =>{
+                        employeeInfo = rows;
+                        employees=employeeInfo.map(employee =>`${employee.first_name} ${employee.last_name}`);
+                     })
+                     .catch(err =>{
+                         console.log(err)
+                     })
+                     getRoles(connection)
+                         .then(([rows]) => {
+                             rolesTitle = rows.map(row => row.title);
+                             roles = rows;
+                             inquirer.prompt([
+                                {
+                                    type: "list",
+                                    name: "employeeName",
+                                    message: "Select one employee to change their role ",
+                                    choices: employees,
+                                    validate: (employeeName) => {
+                                        if (employeeName.length === 1) {
+                                            return true;
+                                        }
+                                        console.log("\nErr: Select 1 employee")
+                                        return false;
+                                    }
+                                }
+                            ])
+                            .then((response)=>{
+                                employeeInfo = response.employeeName.split(' ');
+                                inquirer.prompt([
+                                    {
+                                        type: "list",
+                                        name: "role",
+                                        message: `Select a new role for ${response.employeeName}`,
+                                        choices: rolesTitle,
+                                        validate: (role) => {
+                                            if (role.length = 1) {
+                                                return true;
+                                            }
+                                            console.log("\nErr: Select one role")
+                                            return false;
+                                        }
+                                    }])
+                                    .then(response =>{
+                                        roles.forEach(role =>{
+                                            if (role.title === response.role){
+                                                roleID = role.id;//Notice roleID is not explicitly defined
+                                            }
+                                        })
+                                        console.log(roleID);
+                                        updateEmployee(connection, employeeInfo, roleID)
+                                            .then(([rows]) => {
+                                                console.table(rows);
+                                                query(connection)
+                                            })
+                                            .catch(err =>{
+                                                console.log(err);
+                                            })
+                                    })
+                                    .catch(err =>{
+                                        console.log(err);
+                                    })
+    
+                                
+    
+                                })
+                             
+                         })
+                         .catch(err =>{
+                            console.log(err)
+                        })
+                        
+                        
                     break;
                 case "quit":
                     connection.end();
@@ -184,15 +306,13 @@ function query(connection) {
                     break;
             }
         })
-        //  .then(() => {
-        //      return query(connection);
-        //  })
-
         .catch(error => {
             if (error.isTtyError) {
                 // Prompt couldn't be rendered in the current environment
+                console.log("Prompt cannot be rendered in the current environment");
             } else {
                 // Something else when wrong
+                console.log (error);
             }
         });
 
